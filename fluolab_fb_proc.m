@@ -25,18 +25,15 @@ for i=1:2:nparams
 	end
 end
 
-fluo_data=DATA;
-clearvars DATA;
+proc_data=double(DATA.data(:,:,channel));
+[nsamples,ntrials]=size(proc_data);
 
-fluo_data.data=double(fluo_data.data(:,:,channel));
-[nsamples,ntrials]=size(fluo_data.data);
-
-blanking_idx=[round(blanking(1)*fluo_data.fs):nsamples-round(blanking(2)*fluo_data.fs)];
+blanking_idx=[round(blanking(1)*DATA.fs):nsamples-round(blanking(2)*DATA.fs)];
 
 % include these trials
 
-[~,bad_trial]=find(fluo_data.data(blanking_idx,:)<trial_cut);
-include_trials=setdiff(1:size(fluo_data.data,2),unique(bad_trial));
+[~,bad_trial]=find(proc_data(blanking_idx,:)<trial_cut);
+include_trials=setdiff(1:ntrials,unique(bad_trial));
 ntrials=length(include_trials);
 
 % where are the feedback trials?
@@ -56,7 +53,7 @@ TRIALS.all=1:ntrials;
 trial_types=fieldnames(TRIALS);
 ntypes=length(trial_types);
 
-[new_data,time]=fluolab_condition(fluo_data.data(blanking_idx,include_trials),'tau',.05,'detrend_win',.15,'newfs',100);
+[new_data,time]=fluolab_condition(proc_data(:,include_trials),DATA.fs,'tau',.05,'detrend_win',.15,'newfs',100,'blanking',blanking);
 [nsamples,ntrials]=size(new_data);
 
 for i=1:ntypes

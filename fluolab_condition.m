@@ -1,4 +1,4 @@
-function [NEW_DATA,TIME]=fluolab_condition(DATA,TRIALS,FS,varargin)
+function [NEW_DATA,TIME]=fluolab_condition(DATA,FS,varargin)
 %
 %
 %
@@ -19,8 +19,8 @@ end
 
 for i=1:2:nparams
 	switch lower(varargin{i})
-		case 'FS'
-			FS=varargin{i+1};
+		case 'blanking'
+			blanking=varargin{i+1};
 		case 'tau'
 			tau=varargin{i+1};
 		case 'newfs'
@@ -32,8 +32,6 @@ for i=1:2:nparams
 	end
 end
 
-
-
 decimate_f=round(FS/newfs);
 cutoff=.8*(FS/2)/decimate_f;
 cutoff=cutoff/(FS/2);
@@ -43,6 +41,7 @@ if ~isa(DATA,'double')
 end
 
 DATA=markolab_smooth(DATA,round(tau*FS));
+DATA=DATA(blanking(1)*FS:end-blanking(2)*FS,:);
 
 [b,a]=ellip(3,.2,40,cutoff,'high');
 
