@@ -5,16 +5,18 @@ function [RAW,REGRESS,TRIALS]=fluolab_fb_proc(DATA,AUDIO,varargin)
 %
 %
 %
+
 nparams=length(varargin);
 
 if mod(nparams,2)>0
 	error('Parameters must be specified as parameter/value pairs');
 end
 
-blanking=[.2 .2];
+blanking=[.05 .05];
 channel=1;
 daf_level=20;
 trial_cut=2;
+normalize=1;
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -22,6 +24,8 @@ for i=1:2:nparams
 			blanking=varargin{i+1};
 		case 'daf_level'
 			daf_level=varargin{i+1};
+		case 'normalize'
+			normalize=varargin{i+1};
 	end
 end
 
@@ -49,15 +53,17 @@ TRIALS.catch=setdiff(first_daf:ntrials,daf_trials);
 TRIALS.pre=1:max((first_daf-1),1);
 TRIALS.daf=daf_trials';
 TRIALS.all=1:ntrials;
+TRIALS.include=include_trials;
 
 trial_types=fieldnames(TRIALS);
 ntypes=length(trial_types);
 
-[new_data,time]=fluolab_condition(proc_data(:,include_trials),DATA.fs,'tau',.05,'detrend_win',.15,'newfs',100,'blanking',blanking);
+[new_data,time]=fluolab_condition(proc_data(:,include_trials),DATA.fs,'tau',.05,'detrend_win',.15,'newfs',100,'blanking',blanking,'normalize',normalize);
 [nsamples,ntrials]=size(new_data);
 
 for i=1:ntypes
 	if isempty(TRIALS.(trial_types{i})), continue; end
+	if strcmp(trial_types{i},'include'), continue; end
 	RAW.ci.(trial_types{i})=bootci(1e3,{@mean,new_data(:,TRIALS.(trial_types{i}))'},'type','cper');
 	RAW.mu.(trial_types{i})=mean(new_data(:,TRIALS.(trial_types{i}))');
 end
@@ -66,6 +72,7 @@ new_data_regress=markolab_deltacoef(new_data',4,2)'; % approx 13 ms regression
 
 for i=1:ntypes
 	if isempty(TRIALS.(trial_types{i})), continue; end
+	if strcmp(trial_types{i},'include'), continue; end
 	REGRESS.ci.(trial_types{i})=bootci(1e3,{@mean,new_data_regress(:,TRIALS.(trial_types{i}))'},'type','cper');
 	REGRESS.mu.(trial_types{i})=mean(new_data_regress(:,TRIALS.(trial_types{i}))');
 end
