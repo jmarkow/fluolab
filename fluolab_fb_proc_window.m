@@ -37,14 +37,14 @@ blanking_idx=[round(blanking(1)*TTL.fs):nsamples-round(blanking(2)*TTL.fs)];
 
 daf_mat=(TTL.data(blanking_idx,:)>ttl_level);
 [smps,trials]=find(daf_mat);
-uniq_trials=unique(trials)
-ntrials=length(uniq_trials)
+uniq_trials=unique(trials);
+ntrials=length(uniq_trials);
 
 win_smps=round(win_size*DATA.fs);
 win_vec=[-win_smps(1):win_smps(2)];
-win_len=length(win_vec)
+win_len=length(win_vec);
 
-DATA.win.mat=zeros(win_len,trials);
+DATA.win.mat=zeros(win_len,ntrials);
 
 ttl_nsamples=size(TTL.data,1);
 data_nsamples=size(DATA.mat,1);
@@ -84,3 +84,4 @@ for i=1:ntrials
 	DATA.win.mat(:,uniq_trials(i))=DATA.mat(idx-win_smps(1):idx+win_smps(2),uniq_trials(i));
 end
 
+DATA.win.t=win_vec/DATA.fs;

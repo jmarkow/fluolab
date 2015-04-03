@@ -1,7 +1,6 @@
-function [NEW_DATA,TIME]=fluolab_condition(DATA,FS,varargin)
+function [NEW_DATA,TIME]=fluolab_condition(DATA,FS,TIME,varargin)
 % proc fluo data
 
-blanking=[.2 0]; % blanking interval
 tau=.02; % smoothing tau
 newfs=100; % new sampling rate
 normalize='m'; % normalize method
@@ -16,8 +15,6 @@ end
 
 for i=1:2:nparams
 	switch lower(varargin{i})
-		case 'blanking'
-			blanking=varargin{i+1};
 		case 'tau'
 			tau=varargin{i+1};
 		case 'newfs'
@@ -41,8 +38,7 @@ if ~isa(DATA,'double')
 	DATA=double(DATA);
 end
 
-DATA=markolab_smooth(DATA,round(tau*FS));
-DATA=DATA(blanking(1)*FS:end-blanking(2)*FS,:);
+[nsamples,ntrials]=size(DATA);
 
 [b,a]=ellip(3,.2,40,cutoff,'low');
 
@@ -50,11 +46,22 @@ NEW_DATA=filtfilt(b,a,DATA);
 NEW_DATA=downsample(DATA,decimate_f);
 
 [nsamples,ntrials]=size(NEW_DATA);
+TIME=downsample(TIME,decimate_f);
 
-TIME=[1:nsamples]/newfs;
-TIME=TIME(:);
+tau_smps=round(tau*newfs);
 
 NEW_DATA=fluolab_detrend(NEW_DATA,'fs',newfs,'win',detrend_win,'per',0,'dff',dff,'method','p');
+NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n');
+
+NEW_DATA=NEW_DATA(tau_smps:end,:);
+TIME=TIME(tau_smps:end);
+
+[nsamples,ntrials]=size(NEW_DATA);
+
+
+% exclude zero-padded portion at the beginning
+
+% adjust time accordingly
 
 switch lower(normalize(1))
 
