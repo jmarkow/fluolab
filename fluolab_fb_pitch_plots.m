@@ -58,7 +58,7 @@ if isdate & ~multpitch
 	ylimits=ylimits/ylim_order;
 	ylimits(1)=floor(ylimits(1))*ylim_order;
 	ylimits(2)=ceil(ylimits(2))*ylim_order;
-	ylimits(2)=1100;
+	
 	[nsteps,ntrials]=size(PITCH);
 
 	PITCHFIGS.pitch_timecourse=figure('paperpositionmode','auto','visible',visible);
