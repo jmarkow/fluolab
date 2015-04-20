@@ -22,6 +22,8 @@ dff=1;
 tau=.1;
 detrend_win=.3;
 classify_trials='t';
+detrend_method='p';
+
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -43,6 +45,8 @@ for i=1:2:nparams
 			detrend_win=varargin{i+1};
 		case 'channel'
 			channel=varargin{i+1};
+		case 'detrend_method'
+			detrend_method=varargin{i+1};
 	end
 end
 
@@ -75,7 +79,7 @@ trial_types=fieldnames(TRIALS.fluo_include);
 ntypes=length(trial_types);
 
 [new_data,time]=fluolab_condition(proc_data(blanking_idx,include_trials),DATA.fs,blanking_idx/DATA.fs,'tau',tau,'detrend_win',detrend_win,...
-	'newfs',newfs,'normalize',normalize,'dff',dff);
+	'newfs',newfs,'normalize',normalize,'dff',dff,'detrend_method',detrend_method);
 [nsamples,ntrials]=size(new_data);
 new_data_regress=markolab_deltacoef(new_data',4,2)'; % approx 13 ms regression
 

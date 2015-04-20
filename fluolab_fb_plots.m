@@ -69,7 +69,7 @@ blanking_idx=round(blanking(1)*AUDIO.fs):nsamples-round(blanking(2)*AUDIO.fs);
 blanking_idx_ttl=round(blanking(1)*TTL.fs):nsamples-round(blanking(2)*TTL.fs);
 
 [s,f,t]=zftftb_pretty_sonogram(AUDIO.data(:,sample),...
-	AUDIO.fs,'filtering',300,'clipping',-3,'len',80,'overlap',79,'zeropad',0);
+	AUDIO.fs,'filtering',300,'clipping',[-2 2],'len',80,'overlap',79,'zeropad',0,'norm_amp',1);
 f=f/1e3;
 
 if isdaf
