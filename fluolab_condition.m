@@ -57,7 +57,7 @@ if ~strcmp(lower(detrend_method(1)),'n')
 	disp('Detrending...');
 	NEW_DATA=fluolab_detrend(NEW_DATA,'fs',newfs,'win',detrend_win,'per',8,'dff',dff,'method',detrend_method);
 end
-NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n');
+NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n','b');
 
 NEW_DATA=NEW_DATA(tau_smps:end,:);
 TIME=TIME(tau_smps:end);

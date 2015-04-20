@@ -31,7 +31,8 @@ npulse=3;
 interpulse_len=.02;
 blanking=[.15 .15];
 method='t'; % [t]tl or [s]ound
-daf_level=.15;
+daf_level=.3;
+smoothing=.06;
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -53,6 +54,8 @@ for i=1:2:nparams
 			method=varargin{i+1};
 		case 'daf_level'
 			daf_level=varargin{i+1};
+		case 'smoothing'
+			smoothing=varargin{i+1};
 	end
 end
 
@@ -109,8 +112,10 @@ switch lower(method(1))
 
 		blanking_idx=[round(blanking(1)*AUDIO.fs):nsamples-round(blanking(2)*AUDIO.fs)];
 
-		[b,a]=ellip(4,.2,40,[10e3]/(AUDIO.fs/2),'high');
-		daf_mat=filtfilt(b,a,double(AUDIO.data(blanking_idx,:))).^2>daf_level;
+		[b,a]=ellip(4,.2,40,[5e3]/(AUDIO.fs/2),'high');
+		daf_mat=filtfilt(b,a,double(AUDIO.data(blanking_idx,:))).^2;
+		smooth_smps=round(smoothing*AUDIO.fs);
+		daf_mat=filter(ones(smooth_smps,1)/smooth_smps,1,daf_mat)>daf_level;
 		[~,daf_trials]=find(daf_mat);
 		daf_idx=unique(daf_trials);
 		first_daf=1;

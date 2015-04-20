@@ -14,7 +14,7 @@ end
 
 blanking=[.05 .05];
 channel=1;
-daf_level=.1;
+daf_level=.3;
 trial_cut=2;
 normalize='m';
 newfs=100;
@@ -56,7 +56,6 @@ proc_data=double(DATA.data(:,:,channel));
 % include these trials
 
 blanking_idx=[round(blanking(1)*DATA.fs):nsamples-round(blanking(2)*DATA.fs)];
-
 [~,bad_trial]=find(proc_data(blanking_idx,:)<trial_cut);
 include_trials=setdiff(1:ntrials,unique(bad_trial));
 
@@ -64,7 +63,7 @@ include_trials=setdiff(1:ntrials,unique(bad_trial));
 
 % where are the feedback trials?
 
-[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking);
+[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking,'daf_level',daf_level);
 ntrials=length(include_trials);
 
 TRIALS.fluo_include.catch=find(C(include_trials)==2);
