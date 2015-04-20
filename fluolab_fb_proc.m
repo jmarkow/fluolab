@@ -6,11 +6,16 @@ function [RAW,REGRESS,TRIALS]=fluolab_fb_proc(DATA,AUDIO,TTL,varargin)
 %
 %
 
+RAW=[];
+REGRESS=[];
+TRIALS=[];
+
 nparams=length(varargin);
 
 if mod(nparams,2)>0
 	error('Parameters must be specified as parameter/value pairs');
 end
+
 
 blanking=[.05 .05];
 channel=1;
@@ -77,9 +82,21 @@ TRIALS.all.fluo_include=include_trials;
 trial_types=fieldnames(TRIALS.fluo_include);
 ntypes=length(trial_types);
 
+if blanking_idx(1)>nsamples | blanking_idx(2)<1
+	warning('Data sample too short for blanking setting...');
+	return;
+end
+
 [new_data,time]=fluolab_condition(proc_data(blanking_idx,include_trials),DATA.fs,blanking_idx/DATA.fs,'tau',tau,'detrend_win',detrend_win,...
 	'newfs',newfs,'normalize',normalize,'dff',dff,'detrend_method',detrend_method);
+
 [nsamples,ntrials]=size(new_data);
+
+if nsamples==0
+	warning('Data sample too short for analysis parameters...');
+	return;
+end
+
 new_data_regress=markolab_deltacoef(new_data',4,2)'; % approx 13 ms regression
 
 for i=1:ntypes
