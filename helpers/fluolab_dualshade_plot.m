@@ -46,6 +46,16 @@ for i=1:2:nparams
 	end
 end
 
+nsamples=length(CI_T);
+nsamples2=size(CI1,2);
+nsamples3=size(CI2,2);
+
+if nsamples~=nsamples2 | (~isempty(CI2)&nsamples~=nsamples3)
+	warning('Time vector and confidence interval vectors do not match, skipping...');
+	return;
+end
+
+
 nplots=3;
 
 if ~isempty(TTL)

@@ -9,10 +9,10 @@ function DATA=fluolab_detrend(DATA,varargin)
 % parameter collection
 
 nparams=length(varargin);
-dff=1;
-fs=22;
-win=.4;
-per=8;
+dff=1; % convert to dff or just detrend?
+fs=22; % sampling rate of signal
+win=.4; % size of window (to the left and right of each point, hence .4 is a .8 window in total length)
+per=8; % used for the prctile method, which prctile to use
 method='prctile'; % 'prctile','lsq'
 
 if mod(nparams,2)>0
@@ -51,9 +51,14 @@ NEWDATA=DATA;
 for i=1:ntrials
 
 	curr_data=DATA(:,i);
+
+	% repeat data at the edges
+
 	curr_data=[ repmat(curr_data(1),[win_samples 1]);curr_data;repmat(curr_data(end),[win_samples 1]) ];
 
 	counter=1;
+
+	% slide the window
 
 	for j=win_samples+1:nsamples+win_samples
 
@@ -61,6 +66,7 @@ for i=1:ntrials
 		tmp=curr_data(idx);
 
 		switch lower(method(1))
+
 			case 'p'
 
 				% sliding percentile
@@ -92,10 +98,12 @@ for i=1:ntrials
 
 		end
 
-	
+		% replace sample with detrended version
+
 		NEWDATA(j-win_samples,i)=tmp;
+
 	end
 end
 
-DATA=NEWDATA;
+DATA=NEWDATA; % overwrite old data with detrended data
 clear NEWDATA;

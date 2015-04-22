@@ -17,7 +17,7 @@ if mod(nparams,2)>0
 end
 
 
-blanking=[.05 .05];
+blanking=[0 0];
 channel=1;
 daf_level=.3;
 trial_cut=2;
@@ -28,7 +28,6 @@ tau=.1;
 detrend_win=.3;
 classify_trials='t';
 detrend_method='p';
-
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -60,7 +59,22 @@ proc_data=double(DATA.data(:,:,channel));
 
 % include these trials
 
-blanking_idx=[round(blanking(1)*DATA.fs):nsamples-round(blanking(2)*DATA.fs)];
+blanking_idx=[];
+
+if blanking(1)==0
+	blanking_idx(1)=1;
+else
+	blanking_idx(1)=round(blanking(1)*DATA.fs);
+end
+
+if blanking(2)==0
+	blanking_idx(2)=nsamples;
+else
+	blanking_idx(2)=nsamples-round(blanking(2)*DATA.fs);
+end
+
+blanking_idx=blanking_idx(1):blanking_idx(2);
+
 [~,bad_trial]=find(proc_data(blanking_idx,:)<trial_cut);
 include_trials=setdiff(1:ntrials,unique(bad_trial));
 
