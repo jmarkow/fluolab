@@ -16,18 +16,18 @@ if mod(nparams,2)>0
 	error('Parameters must be specified as parameter/value pairs');
 end
 
-
 blanking=[0 0];
 channel=1;
 daf_level=.3;
 trial_cut=2;
 normalize='m';
-newfs=100;
+newfs=400;
 dff=1;
 tau=.1;
 detrend_win=.3;
 classify_trials='t';
 detrend_method='p';
+tau_regress=.05;
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -51,6 +51,8 @@ for i=1:2:nparams
 			channel=varargin{i+1};
 		case 'detrend_method'
 			detrend_method=varargin{i+1};
+		case 'tau_regress'
+			tau_regress=varargin{i+1};
 	end
 end
 
@@ -111,7 +113,7 @@ if nsamples==0
 	return;
 end
 
-new_data_regress=markolab_deltacoef(new_data',4,2)'; % approx 13 ms regression
+new_data_regress=markolab_deltacoef(new_data',round(tau_regress*newfs),2)'; % approx 13 ms regression
 
 for i=1:ntypes
 

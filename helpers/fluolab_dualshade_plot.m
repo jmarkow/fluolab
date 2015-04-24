@@ -12,7 +12,9 @@ edgecolor=[0 0 1];
 facecolor_fb=[1 0 0];
 edgecolor_fb=[1 0 0];
 datenums=[];
-ylimits=[.2 .7];
+%ylimits=[.2 .7];
+ylimits=[];
+ylim_order=100;
 facealpha=.5;
 colors='jet';
 labels={};
@@ -106,7 +108,7 @@ if ~isempty(CI2)
 	end
 else
 	obs_min=min(CI1(:));
-	obs_max=max(CI2(:));
+	obs_max=max(CI1(:));
 end
 
 idx=idx+2;
@@ -120,12 +122,12 @@ xlim([max(CI_T(1),T(1)) min(CI_T(end),T(end))]);
 
 new_ylimits=ylimits;
 
-if obs_min<new_ylimits(1)
-	new_ylimits(1)=obs_min;
+if isempty(ylimits) | obs_min<new_ylimits(1)
+	new_ylimits(1)=floor(obs_min*ylim_order)/ylim_order;
 end
 
-if obs_max>new_ylimits(2)
-	new_ylimits(2)=obs_max;
+if isempty(ylimits) | obs_max>new_ylimits(2)
+	new_ylimits(2)=ceil(obs_max*ylim_order)/ylim_order;
 end
 
 ylim([new_ylimits]);

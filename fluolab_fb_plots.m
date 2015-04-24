@@ -95,7 +95,7 @@ else
 end
 
 idx=~strcmp(conditions.names,'daf');
-other_names=conditions.names(idx)
+other_names=conditions.names(idx);
 other_proc=conditions.proc(idx);
 other_names(other_proc==0)=[];
 other_names(strcmp(other_names,'all'))=[];
@@ -112,7 +112,7 @@ if isdaf
 
 		if ~isempty(ax)
 			axes(ax(1));
-			title(['ntrials catch: ' num2str(length(TRIALS.fluo_include.(other_names{i}))) ...
+			title(['ntrials ' other_names{i} ':  ' num2str(length(TRIALS.fluo_include.(other_names{i}))) ...
 			   	' ntrials daf:  ' num2str(length(TRIALS.fluo_include.daf))]);
 		end
 	end
@@ -138,9 +138,7 @@ escape_idx=markolab_smooth(escape_idx,min(ntrials,100),'z');
 idx=~strcmp(conditions.names,'all');
 other_names=conditions.names(idx);
 other_proc=conditions.proc(idx);
-other_names(other_proc==0)=[]
-
-FLUOFIGS
+other_names(other_proc==0)=[];
 
 for i=1:length(other_names)
 

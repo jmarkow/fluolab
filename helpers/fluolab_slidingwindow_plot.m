@@ -6,6 +6,7 @@ function [STEPS,t]=fluoflab_sliding_window(T,F,S,DATA,DATA_T,WIN,WIN_OVERLAP,var
 colors='jet';
 cbar_dist=.1;
 cbar_width = .025; 
+clim_order=1e3;
 datenums=[];
 time_dist=.005;
 time_width=.075;
@@ -99,7 +100,7 @@ title([label]);
 
 pos=get(gca,'position');
 clims=caxis();
-clims=round(clims*100)/100;
+clims=round(clims*clim_order)/clim_order;
 caxis(clims);
 set(ax(end),'TickLength',[0 0]);
 set(ax(end),'Position',[pos(1) pos(2)+cbar_dist+cbar_width pos(3) pos(4)-cbar_dist-cbar_width]);
