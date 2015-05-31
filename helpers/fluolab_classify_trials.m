@@ -110,7 +110,9 @@ switch lower(method(1))
 		blanking_idx=[round(blanking(1)*AUDIO.fs):nsamples-round(blanking(2)*AUDIO.fs)];
 
 		[b,a]=ellip(4,.2,40,[10e3]/(AUDIO.fs/2),'high');
-		daf_mat=filtfilt(b,a,double(AUDIO.data(blanking_idx,:))).^2>daf_level;
+		daf_mat=filtfilt(b,a,double(AUDIO.data(blanking_idx,:))).^2>.005;
+		smps=round(AUDIO.fs*.06);
+		daf_mat=filter(ones(smps,1)/smps,1,daf_mat)>daf_level;
 		[~,daf_trials]=find(daf_mat);
 		daf_idx=unique(daf_trials);
 		first_daf=1;
