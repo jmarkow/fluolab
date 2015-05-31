@@ -56,14 +56,23 @@ TIME=downsample(TIME,decimate_f);
 
 tau_smps=round(tau*newfs);
 
+if tau>0
+	NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n',smooth_type);
+	NEW_DATA=NEW_DATA(tau_smps:end,:);
+	TIME=TIME(tau_smps:end);
+end
+
 if ~strcmp(lower(detrend_method(1)),'n')
 	disp('Detrending...');
 	NEW_DATA=fluolab_detrend(NEW_DATA,'fs',newfs,'win',detrend_win,'per',8,'dff',dff,'method',detrend_method);
 end
-NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n',smooth_type);
 
-NEW_DATA=NEW_DATA(tau_smps:end,:);
-TIME=TIME(tau_smps:end);
+if detrend_win>0
+	detrend_smps=round(detrend_win*newfs)
+	NEW_DATA=NEW_DATA(detrend_smps:end-detrend_smps,:);
+	TIME=TIME(detrend_smps:end-detrend_smps);
+end
+
 
 [nsamples,ntrials]=size(NEW_DATA);
 

@@ -30,6 +30,8 @@ for i=1:2:nparams
 	end
 end
 
+% 
+
 padding=round(padding*fs);
 SONG=SONG(padding(1):end-padding(2),:);
 
@@ -53,7 +55,6 @@ if isempty(nfft)
 end
 
 % assume song is samples x trials
-
 % get random phases
 %
 

@@ -28,6 +28,9 @@ detrend_win=.3;
 classify_trials='t';
 detrend_method='p';
 tau_regress=.05;
+nmads=4;
+detrend_sliding=0;
+neg=0;
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -53,10 +56,23 @@ for i=1:2:nparams
 			detrend_method=varargin{i+1};
 		case 'tau_regress'
 			tau_regress=varargin{i+1};
+		case 'nmads'
+			nmads=varargin{i+1};
+		case 'trial_cut'
+			trial_cut=varargin{i+1};
+		case 'neg'
+			neg=varargin{i+1};
 	end
 end
 
+
+
 proc_data=double(DATA.data(:,:,channel));
+
+if neg
+	proc_data=-proc_data;
+end
+
 [nsamples,ntrials]=size(proc_data);
 
 % include these trials
@@ -78,6 +94,12 @@ end
 blanking_idx=blanking_idx(1):blanking_idx(2);
 
 [~,bad_trial]=find(proc_data(blanking_idx,:)<trial_cut);
+
+if nmads>0
+	[bad_trial2]=fluolab_hampel_filt(proc_data(blanking_idx,:),'nmads',nmads);
+	bad_trial=unique([bad_trial(:);bad_trial2(:)]);
+end
+
 include_trials=setdiff(1:ntrials,unique(bad_trial));
 
 %pause();
@@ -95,9 +117,6 @@ TRIALS.fluo_include.catch_other=find(C(include_trials)==0|C(include_trials)==2);
 TRIALS.fluo_include.all=[1:length(include_trials)];
 TRIALS.all.fluo_include=include_trials;
 
-trial_types=fieldnames(TRIALS.fluo_include);
-ntypes=length(trial_types);
-
 if blanking_idx(1)>nsamples | blanking_idx(2)<1
 	warning('Data sample too short for blanking setting...');
 	return;
@@ -105,8 +124,10 @@ end
 
 [new_data,time]=fluolab_condition(proc_data(blanking_idx,include_trials),DATA.fs,blanking_idx/DATA.fs,'tau',tau,'detrend_win',detrend_win,...
 	'newfs',newfs,'normalize',normalize,'dff',dff,'detrend_method',detrend_method);
-
 [nsamples,ntrials]=size(new_data);
+
+trial_types=fieldnames(TRIALS.fluo_include);
+ntypes=length(trial_types);
 
 if nsamples==0
 	warning('Data sample too short for analysis parameters...');

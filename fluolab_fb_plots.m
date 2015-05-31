@@ -112,7 +112,7 @@ if isdaf
 
 		if ~isempty(ax)
 			axes(ax(1));
-			title(['ntrials ' other_names{i} ':  ' num2str(length(TRIALS.fluo_include.(other_names{i}))) ...
+			title(['ntrials ' label ':  ' num2str(length(TRIALS.fluo_include.(other_names{i}))) ...
 			   	' ntrials daf:  ' num2str(length(TRIALS.fluo_include.daf))]);
 		end
 	end

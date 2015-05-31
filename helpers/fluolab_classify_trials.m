@@ -29,7 +29,7 @@ npulse=3;
 interpulse_len=.02;
 blanking=[.15 .15];
 method='t'; % [t]tl or [s]ound
-daf_level=.3;
+daf_level=.4;
 smoothing=.06;
 daf_cutoff=500;
 
