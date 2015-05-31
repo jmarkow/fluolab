@@ -6,24 +6,31 @@ function [RAW,REGRESS,TRIALS]=fluolab_fb_proc(DATA,AUDIO,TTL,varargin)
 %
 %
 
+RAW=[];
+REGRESS=[];
+TRIALS=[];
+
 nparams=length(varargin);
 
 if mod(nparams,2)>0
 	error('Parameters must be specified as parameter/value pairs');
 end
 
-blanking=[.05 .05];
+blanking=[0 0];
 channel=1;
-daf_level=.1;
+daf_level=.3;
 trial_cut=2;
 normalize='m';
-newfs=100;
+newfs=400;
 dff=1;
 tau=.1;
 detrend_win=.3;
 classify_trials='t';
 detrend_method='p';
-
+tau_regress=.05;
+nmads=4;
+detrend_sliding=0;
+neg=0;
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -47,24 +54,59 @@ for i=1:2:nparams
 			channel=varargin{i+1};
 		case 'detrend_method'
 			detrend_method=varargin{i+1};
+		case 'tau_regress'
+			tau_regress=varargin{i+1};
+		case 'nmads'
+			nmads=varargin{i+1};
+		case 'trial_cut'
+			trial_cut=varargin{i+1};
+		case 'neg'
+			neg=varargin{i+1};
 	end
 end
 
+
+
 proc_data=double(DATA.data(:,:,channel));
+
+if neg
+	proc_data=-proc_data;
+end
+
 [nsamples,ntrials]=size(proc_data);
 
 % include these trials
 
-blanking_idx=[round(blanking(1)*DATA.fs):nsamples-round(blanking(2)*DATA.fs)];
+blanking_idx=[];
+
+if blanking(1)==0
+	blanking_idx(1)=1;
+else
+	blanking_idx(1)=round(blanking(1)*DATA.fs);
+end
+
+if blanking(2)==0
+	blanking_idx(2)=nsamples;
+else
+	blanking_idx(2)=nsamples-round(blanking(2)*DATA.fs);
+end
+
+blanking_idx=blanking_idx(1):blanking_idx(2);
 
 [~,bad_trial]=find(proc_data(blanking_idx,:)<trial_cut);
+
+if nmads>0
+	[bad_trial2]=fluolab_hampel_filt(proc_data(blanking_idx,:),'nmads',nmads);
+	bad_trial=unique([bad_trial(:);bad_trial2(:)]);
+end
+
 include_trials=setdiff(1:ntrials,unique(bad_trial));
 
 %pause();
 
 % where are the feedback trials?
 
-[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking);
+[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking,'daf_level',daf_level);
 ntrials=length(include_trials);
 
 TRIALS.fluo_include.catch=find(C(include_trials)==2);
@@ -75,13 +117,24 @@ TRIALS.fluo_include.catch_other=find(C(include_trials)==0|C(include_trials)==2);
 TRIALS.fluo_include.all=[1:length(include_trials)];
 TRIALS.all.fluo_include=include_trials;
 
-trial_types=fieldnames(TRIALS.fluo_include);
-ntypes=length(trial_types);
+if blanking_idx(1)>nsamples | blanking_idx(2)<1
+	warning('Data sample too short for blanking setting...');
+	return;
+end
 
 [new_data,time]=fluolab_condition(proc_data(blanking_idx,include_trials),DATA.fs,blanking_idx/DATA.fs,'tau',tau,'detrend_win',detrend_win,...
 	'newfs',newfs,'normalize',normalize,'dff',dff,'detrend_method',detrend_method);
 [nsamples,ntrials]=size(new_data);
-new_data_regress=markolab_deltacoef(new_data',4,2)'; % approx 13 ms regression
+
+trial_types=fieldnames(TRIALS.fluo_include);
+ntypes=length(trial_types);
+
+if nsamples==0
+	warning('Data sample too short for analysis parameters...');
+	return;
+end
+
+new_data_regress=markolab_deltacoef(new_data',round(tau_regress*newfs),2)'; % approx 13 ms regression
 
 for i=1:ntypes
 

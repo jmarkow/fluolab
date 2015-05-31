@@ -7,8 +7,8 @@ facecolor_fb=[1 0 0];
 edgecolor_fb=[1 0 0];
 ylimits=[.2 .7];
 facealpha=.5;
-win_size=30;
-win_overlap=29;
+win_size=20;
+win_overlap=19;
 colors='jet';
 cbar_width = .025; 
 cbar_dist=.01;
@@ -53,6 +53,16 @@ iscatch=length(TRIALS.fluo_include.catch)>1;
 isother=length(TRIALS.fluo_include.other)>1;
 iscatchandother=length(TRIALS.fluo_include.catch_other)>1;
 
+conditions.names=fieldnames(TRIALS.fluo_include);
+nconditions=length(conditions.names);
+conditions.ntrials=zeros(1,nconditions);
+conditions.proc=zeros(1,nconditions);
+
+for i=1:nconditions
+	conditions.ntrials(i)=length(TRIALS.fluo_include.(conditions.names{i}));
+	conditions.proc(i)=conditions.ntrials(i)>1;
+end
+
 % take first catch or all trial for AUDIO sample
 
 sample=min(TRIALS.all.catch);
@@ -64,15 +74,17 @@ if isempty(sample)
 end
 
 [nsamples,ntrials]=size(AUDIO.data);
-
-blanking_idx=round(blanking(1)*AUDIO.fs):nsamples-round(blanking(2)*AUDIO.fs);
-blanking_idx_ttl=round(blanking(1)*TTL.fs):nsamples-round(blanking(2)*TTL.fs);
-
 [s,f,t]=zftftb_pretty_sonogram(AUDIO.data(:,sample),...
 	AUDIO.fs,'filtering',300,'clipping',[-2 2],'len',80,'overlap',79,'zeropad',0,'norm_amp',1);
 f=f/1e3;
 
-if isdaf
+% do we have any feedback trials?
+
+isdaf=conditions.proc(strcmp(conditions.names,'daf'));
+iscatch=conditions.proc(strcmp(conditions.names,'catch'));
+isother=conditions.proc(strcmp(conditions.names,'other'));
+
+if isdaf & ~isempty(TTL)
 	if isother
 		TTL.plot=TTL.data(:,sort([TRIALS.all.daf(:);TRIALS.all.other(:)]));
 	else
@@ -82,90 +94,77 @@ else
 	TTL=[];
 end
 
-if isdaf & iscatch
-	FLUOFIGS.songalign_daf_catch=figure('paperpositionmode','auto','visible',visible);
-	ax=fluolab_dualshade_plot(t,f,s,RAW.t,RAW.ci.daf,RAW.mu.daf,RAW.ci.catch,RAW.mu.catch,TTL,'labels',{'DAF','Catch'});
-	axes(ax(1));
-	title(['ntrials catch: ' num2str(length(TRIALS.fluo_include.catch)) ' ntrials daf:  ' num2str(length(TRIALS.fluo_include.daf))]);
-end
+idx=~strcmp(conditions.names,'daf');
+other_names=conditions.names(idx);
+other_proc=conditions.proc(idx);
+other_names(other_proc==0)=[];
+other_names(strcmp(other_names,'all'))=[];
 
+if isdaf
+	for i=1:length(other_names)
+		fig_name=['songalign_daf_' other_names{i}];
+		FLUOFIGS.(fig_name)=figure('paperpositionmode','auto','visible',visible);
 
-if isdaf & isother
-	FLUOFIGS.songalign_daf_other=figure('paperpositionmode','auto','visible',visible);
-	ax=fluolab_dualshade_plot(t,f,s,RAW.t,RAW.ci.daf,RAW.mu.daf,RAW.ci.other,RAW.mu.other,TTL,'labels',{'DAF','Other'});
-	axes(ax(1));
-	title(['ntrials other ' num2str(length(TRIALS.fluo_include.other)) ' ntrials daf:  ' num2str(length(TRIALS.fluo_include.daf))]);
+		label=other_names{i};
+		label(label=='_')='&';
+
+		ax=fluolab_dualshade_plot(t,f,s,RAW.t,RAW.ci.daf,RAW.mu.daf,RAW.ci.(other_names{i}),RAW.mu.(other_names{i}),TTL,'labels',{'DAF',label});
+
+		if ~isempty(ax)
+			axes(ax(1));
+			title(['ntrials ' label ':  ' num2str(length(TRIALS.fluo_include.(other_names{i}))) ...
+			   	' ntrials daf:  ' num2str(length(TRIALS.fluo_include.daf))]);
+		end
+	end
 end
 
 if iscatch & isother
 	FLUOFIGS.songalign_other_catch=figure('paperpositionmode','auto','visible',visible);
 	ax=fluolab_dualshade_plot(t,f,s,RAW.t,RAW.ci.other,RAW.mu.other,RAW.ci.catch,RAW.mu.catch,TTL,'labels',{'Other','Catch'});
-	axes(ax(1));
-	title(['ntrials other ' num2str(length(TRIALS.fluo_include.other)) ' ntrials catch:  ' num2str(length(TRIALS.fluo_include.catch))]);
-end
-
-if isdaf & iscatchandother
-	FLUOFIGS.songalign_daf_catchandother=figure('paperpositionmode','auto','visible',visible);
-	ax=fluolab_dualshade_plot(t,f,s,RAW.t,RAW.ci.daf,RAW.mu.daf,RAW.ci.catch_other,RAW.mu.catch_other,TTL,'labels',{'DAF','Catch & Other'});
-	axes(ax(1));
-	title(['ntrials catch and other ' num2str(length(TRIALS.fluo_include.catch_other)) ' ntrials daf:  ' num2str(length(TRIALS.fluo_include.daf))]);
+	if ~isempty(ax)
+		axes(ax(1));
+		title(['ntrials other ' num2str(length(TRIALS.fluo_include.other)) ' ntrials catch:  ' num2str(length(TRIALS.fluo_include.catch))]);
+	end
 end
 
 %  two sliding window plots, then mic amplitude plots
 
 
-if iscatch
-	% sliding window plots
+ntrials=size(AUDIO.data,2);
+escape_idx=zeros(ntrials,1);
+escape_idx(TRIALS.all.other)=1;
+escape_idx=markolab_smooth(escape_idx,min(ntrials,100),'z');
 
-	FLUOFIGS.smoothtrials_catch=figure('paperpositionmode','auto','visible',visible);
+idx=~strcmp(conditions.names,'all');
+other_names=conditions.names(idx);
+other_proc=conditions.proc(idx);
+other_names(other_proc==0)=[];
 
-	if ~isempty(datenums)
-		tmp=datenums(TRIALS.all.fluo_include(TRIALS.fluo_include.catch));
-	else
-		tmp=[];
-	end
+for i=1:length(other_names)
 
-	fluolab_slidingwindow_plot(t,f,s,RAW.mat(:,TRIALS.fluo_include.catch),RAW.t,win_size,win_overlap,'datenums',tmp,'label','Catch');
-end
+	fig_name=['smoothtrials_' other_names{i}];
+	FLUOFIGS.(fig_name)=figure('paperpositionmode','auto','visible',visible);
 
+	trials=TRIALS.all.fluo_include(TRIALS.fluo_include.(other_names{i}));
 
-if isdaf
-	FLUOFIGS.smoothtrials_daf=figure('paperpositionmode','auto','visible',visible);
-
-	if ~isempty(datenums)
-		tmp=datenums(TRIALS.all.fluo_include(TRIALS.fluo_include.daf));
-	else
-		tmp=[];
-	end
-
-
-	fluolab_slidingwindow_plot(t,f,s,RAW.mat(:,TRIALS.fluo_include.daf),RAW.t,win_size,win_overlap,'datenums',tmp,'label','DAF');
-end
-
-if isother
-	FLUOFIGS.smoothtrials_other=figure('paperpositionmode','auto','visible',visible);
+	tmp=[];
+	tmp2=[];
 
 	if ~isempty(datenums)
-		tmp=datenums(TRIALS.all.fluo_include(TRIALS.fluo_include.other));
-	else
-		tmp=[];
+		tmp=datenums(trials);
 	end
 
-
-	fluolab_slidingwindow_plot(t,f,s,RAW.mat(:,TRIALS.fluo_include.other),RAW.t,win_size,win_overlap,'datenums',tmp,'label','Other');
-end
-
-if iscatchandother
-	FLUOFIGS.smoothtrials_catchandother=figure('paperpositionmode','auto','visible',visible);
-
-	if ~isempty(datenums)
-		tmp=datenums(TRIALS.all.fluo_include(TRIALS.fluo_include.catch_other));
-	else
-		tmp=[];
+	if ~isempty(escape_idx)
+		tmp2=escape_idx(trials);
 	end
 
+	trials=TRIALS.fluo_include.(other_names{i});
 
-	fluolab_slidingwindow_plot(t,f,s,RAW.mat(:,TRIALS.fluo_include.catch_other),RAW.t,win_size,win_overlap,'datenums',tmp,'label','Catch & other');
+	label=other_names{i};
+	label(label=='_')='&';
+
+	fluolab_slidingwindow_plot(t,f,s,RAW.mat(:,trials),RAW.t,win_size,win_overlap,'datenums',tmp,'label',label,'escape_idx',tmp2);
+
 end
 
 FLUOFIGS.songalign_all=figure('paperpositionmode','auto','visible',visible);

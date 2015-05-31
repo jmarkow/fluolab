@@ -9,11 +9,13 @@ function DATA=fluolab_detrend(DATA,varargin)
 % parameter collection
 
 nparams=length(varargin);
-dff=1;
-fs=22;
-win=.4;
-per=8;
+dff=1; % convert to dff or just detrend?
+fs=22; % sampling rate of signal
+win=.4; % size of window (to the left and right of each point, hence .4 is a .8 window in total length)
+per=8; % used for the prctile method, which prctile to use
 method='prctile'; % 'prctile','lsq'
+sliding=1;
+edge='r';
 
 if mod(nparams,2)>0
 	error('Parameters must be specified as parameter/value pairs');
@@ -31,6 +33,10 @@ for i=1:2:nparams
 			fs=varargin{i+1};
 		case 'win'
 			win=varargin{i+1};
+		case 'sliding'
+			sliding=varargin{i+1};
+		case 'edge'
+			edge=varargin{i+1};
 	end
 end
 
@@ -48,54 +54,100 @@ win_intercept=ones(size(win_x));
 
 NEWDATA=DATA;
 
-for i=1:ntrials
+if win>0
+	for i=1:ntrials
 
-	curr_data=DATA(:,i);
-	curr_data=[ repmat(curr_data(1),[win_samples 1]);curr_data;repmat(curr_data(end),[win_samples 1]) ];
+		curr_data=DATA(:,i);
 
-	counter=1;
+		% repeat data at the edges
 
-	for j=win_samples+1:nsamples+win_samples
+		curr_data=[ repmat(curr_data(1),[win_samples 1]);curr_data;repmat(curr_data(end),[win_samples 1]) ];
 
-		idx=j-win_samples:j+win_samples;
-		tmp=curr_data(idx);
+		counter=1;
 
-		switch lower(method(1))
-			case 'p'
+		% slide the window
 
-				% sliding percentile
+		for j=win_samples+1:nsamples+win_samples
 
-				tmp_baseline=prctile(tmp,per);
+			idx=j-win_samples:j+win_samples;
+			tmp=curr_data(idx);
 
-				if dff
-					tmp=((DATA(j-win_samples,i)-tmp_baseline)./tmp_baseline)*100;
-				else
-					tmp=(DATA(j-win_samples,i)-tmp_baseline);
-				end
+			switch lower(method(1))
 
-			case 'r'
-				
-				% least squares solution, brute force
+				case 'p'
 
+					% sliding percentile
+
+					tmp_baseline=prctile(tmp,per);
+
+					if dff
+						tmp=((DATA(j-win_samples,i)-tmp_baseline)./tmp_baseline)*100;
+					else
+						tmp=(DATA(j-win_samples,i)-tmp_baseline);
+					end
+
+				case 'r'
+
+					% least squares solution, brute force
+
+					tmp=tmp(:);
+
+					tmp_coeffs=[win_intercept win_x]\tmp;
+					tmp_baseline=win_x.*tmp_coeffs(2)+tmp_coeffs(1);
+
+					if dff
+						tmp=((tmp-tmp_baseline)./tmp_baseline)*100;
+					else
+						tmp=(tmp-tmp_baseline);
+					end
+
+					tmp=tmp(win_samples+1);
+
+			end
+
+				% replace sample with detrended version
+
+			NEWDATA(j-win_samples,i)=tmp;
+
+		end
+
+	end
+else
+
+	switch lower(method(1))
+		case 'p'
+
+			baseline=repmat(prctile(NEWDATA,per),[nsamples 1]); % baseline per trial
+
+			if dff
+				NEWDATA=((NEWDATA-baseline)./baseline)*100;
+			else
+				NEWDATA=NEWDATA-baseline;
+			end
+
+		case 'r'
+
+			win_x=[1:nsamples]';
+			win_intercept=ones(size(win_x));
+
+			for i=1:ntrials
+				tmp=NEWDATA(:,i);
 				tmp=tmp(:);
 
 				tmp_coeffs=[win_intercept win_x]\tmp;
-				tmp_baseline=win_x.*tmp_coeffs(2)+tmp_coeffs(1);
+				tmp_baseline=win_x*tmp_coeffs(2)+tmp_coeffs(1);
 
 				if dff
 					tmp=((tmp-tmp_baseline)./tmp_baseline)*100;
 				else
 					tmp=(tmp-tmp_baseline);
 				end
-				
-				tmp=tmp(win_samples+1);
 
-		end
+				NEWDATA(:,i)=tmp;
 
-	
-		NEWDATA(j-win_samples,i)=tmp;
+			end
 	end
 end
 
-DATA=NEWDATA;
+DATA=NEWDATA; % overwrite old data with detrended data
 clear NEWDATA;

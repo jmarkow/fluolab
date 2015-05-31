@@ -1,6 +1,8 @@
 function PITCHFIGS=fluolab_fb_plots(PITCH,varargin)
 
 
+PITCHFIGS=[];
+
 nparams=length(varargin);
 visible='on';
 datenums=[];
@@ -45,6 +47,12 @@ multpitch=iscell(PITCH);
 isthresh=~isempty(pitch_threshold);
 
 hist_colors=colormap([hist_colors '(' num2str(length(PITCH)) ')']);
+
+[nsteps,ntrials]=size(PITCH);
+
+if isempty(ntrials)
+	return;
+end
 
 % plot pitch from today
 
