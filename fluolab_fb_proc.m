@@ -65,7 +65,9 @@ for i=1:2:nparams
 	end
 end
 
-
+if isempty(TTL) & isempty(AUDIO)
+	classify_trials='';
+end
 
 proc_data=double(DATA.data(:,:,channel));
 
@@ -101,13 +103,17 @@ if nmads>0
 end
 
 include_trials=setdiff(1:ntrials,unique(bad_trial));
+ntrials=length(include_trials);
 
 %pause();
 
 % where are the feedback trials?
 
-[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking,'daf_level',daf_level);
-ntrials=length(include_trials);
+if isempty(classify_trials)
+	C=zeros(size(DATA.data,2),1);
+else
+	[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking,'daf_level',daf_level);
+end
 
 TRIALS.fluo_include.catch=find(C(include_trials)==2);
 TRIALS.fluo_include.daf=find(C(include_trials)==1);

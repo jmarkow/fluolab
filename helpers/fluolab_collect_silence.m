@@ -1,4 +1,4 @@
-function [DATA,MIC_DATA]=ephys_collectsilence(DIR,varargin)
+function [DATA,MIC_DATA,DIST]=ephys_collectsilence(DIR,varargin)
 %
 %
 %
@@ -18,12 +18,12 @@ end
 
 min_dist=1; % minimum distance from any vocalization (in seconds,typically 4 seconds)
 seg_length=1; % how long should the segments be (typically 1 second)
-max_trials=800; % maximum number of trials to collect
+max_trials=inf; % maximum number of trials to collect
 
 song_ratio=2; % power ratio between song and non-song band
 song_len=.005; % window to calculate ratio in (ms)
 song_overlap=0; % just do no overlap, faster
-song_thresh=.3; % between .2 and .3 seems to work best (higher is more exlusive)
+song_thresh=.3; % between .2 and .3 seems to work best (higher is more exclusive)
 song_band=[2e3 6e3];
 song_pow=-inf; % raw power threshold (so extremely weak signals are excluded)
 song_duration=.8; % moving average of ratio
@@ -59,6 +59,7 @@ filelist=dir(fullfile(DIR,'*.mat'));
 
 DATA=[];
 MIC_DATA=[];
+DIST=[];
 
 counter=1;
 contflag=1;
@@ -116,12 +117,26 @@ for i=1:length(filelist)
 			song_dist_left=min(abs(left_edge-ext_pts_song(:)))
 			song_dist_right=min(abs(right_edge-ext_pts_song(:)))
 
+			if isempty(ext_pts_song)
+				song_dist_left=inf;
+				song_dist_right=inf;
+			end
+
 			flag_left=song_dist_left>dist_smps;
 			flag_right=song_dist_right>dist_smps;
+			
+			% check candidate
+			
+			[b,a]=ellip(3,.2,40,[3e3 7e3]/(audio.fs/2),'bandpass');
 
-			if flag_left & flag_right
+			mic_amp=filtfilt(b,a,audio.data(left_edge:right_edge));
+			mic_amp=20*log10(sqrt(markolab_smooth(mic_amp.^2,round(.01*24.414e3))));
+			flag_amp=mean(mic_amp)<-60;
+
+			if flag_left & flag_right & flag_amp
 				DATA(:,counter)=adc.data(left_edge:right_edge,1);
 				MIC_DATA(:,counter)=audio.data(left_edge:right_edge);
+				DIST(:,counter)=[song_dist_left/audio.fs;song_dist_right/audio.fs];
 				counter=counter+1
 			end
 			
