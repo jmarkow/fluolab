@@ -18,7 +18,7 @@ end
 
 min_dist=1; % minimum distance from any vocalization (in seconds,typically 4 seconds)
 seg_length=1; % how long should the segments be (typically 1 second)
-max_trials=inf; % maximum number of trials to collect
+max_trials=300; % maximum number of trials to collect
 
 song_ratio=2; % power ratio between song and non-song band
 song_len=.005; % window to calculate ratio in (ms)
