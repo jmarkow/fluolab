@@ -58,6 +58,7 @@ for i=1:2:nparams
 	end
 end
 
+blanking
 
 switch lower(method(1))
 

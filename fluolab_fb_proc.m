@@ -112,7 +112,7 @@ ntrials=length(include_trials);
 if isempty(classify_trials)
 	C=zeros(size(DATA.data,2),1);
 else
-	[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking,'daf_level',daf_level);
+	[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',padding,'daf_level',daf_level);
 end
 
 TRIALS.fluo_include.catch=find(C(include_trials)==2);
