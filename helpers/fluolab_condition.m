@@ -57,6 +57,7 @@ TIME=downsample(TIME,decimate_f);
 tau_smps=round(tau*newfs);
 
 if tau>0
+    tau_smps
 	NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n',smooth_type);
 	NEW_DATA=NEW_DATA(tau_smps:end,:);
 	TIME=TIME(tau_smps:end);

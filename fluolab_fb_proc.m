@@ -31,6 +31,8 @@ tau_regress=.05;
 nmads=4;
 detrend_sliding=0;
 neg=0;
+padding=[];
+smooth_type='b';
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -62,6 +64,10 @@ for i=1:2:nparams
 			trial_cut=varargin{i+1};
 		case 'neg'
 			neg=varargin{i+1};
+		case 'padding'
+			padding=varargin{i+1};
+        case 'smooth_type'
+            smooth_type=varargin{i+1};
 	end
 end
 
@@ -94,12 +100,25 @@ else
 end
 
 blanking_idx=blanking_idx(1):blanking_idx(2);
+trial_cut_idx=any(proc_data(blanking_idx,:)<trial_cut);
+[~,bad_trial]=find(trial_cut_idx);
 
-[~,bad_trial]=find(proc_data(blanking_idx,:)<trial_cut);
 
 if nmads>0
-	[bad_trial2]=fluolab_hampel_filt(proc_data(blanking_idx,:),'nmads',nmads);
-	bad_trial=unique([bad_trial(:);bad_trial2(:)]);
+	%[bad_trial2]=fluolab_hampel_filt(proc_data(blanking_idx,:),'nmads',nmads);
+	% detect jumps in dt
+
+	dt=max(abs(diff(proc_data(blanking_idx,~trial_cut_idx))));
+	mu=median(dt)
+	v=mad(dt,2)
+
+	tmp=dt>(mu+nmads*v);
+	
+	dt_idx=zeros(size(trial_cut_idx));
+	dt_idx(~trial_cut_idx)=tmp;
+
+	bad_trial=find(trial_cut_idx|dt_idx);
+
 end
 
 include_trials=setdiff(1:ntrials,unique(bad_trial));
@@ -112,7 +131,8 @@ ntrials=length(include_trials);
 if isempty(classify_trials)
 	C=zeros(size(DATA.data,2),1);
 else
-	[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking,'daf_level',daf_level);
+	[TRIALS,C]=fluolab_classify_trials(TTL,AUDIO,'include_trials',include_trials,'method',classify_trials,'blanking',blanking,'daf_level',daf_level,...
+		'padding',padding);
 end
 
 TRIALS.fluo_include.catch=find(C(include_trials)==2);
@@ -129,14 +149,24 @@ if blanking_idx(1)>nsamples | blanking_idx(2)<1
 end
 
 [new_data,time]=fluolab_condition(proc_data(blanking_idx,include_trials),DATA.fs,blanking_idx/DATA.fs,'tau',tau,'detrend_win',detrend_win,...
-	'newfs',newfs,'normalize',normalize,'dff',dff,'detrend_method',detrend_method);
+	'newfs',newfs,'normalize',normalize,'dff',dff,'detrend_method',detrend_method,'smooth_type',smooth_type);
 [nsamples,ntrials]=size(new_data);
 
 trial_types=fieldnames(TRIALS.fluo_include);
 ntypes=length(trial_types);
 
-if nsamples==0
+if nsamples==0 
 	warning('Data sample too short for analysis parameters...');
+	return;
+end
+
+if ntrials<2
+	warning('Not enough trials to continue...');
+	return;
+end
+
+if any(isnan(new_data(:)))
+	warning('Found NaN in detrended data...');
 	return;
 end
 
@@ -144,7 +174,18 @@ new_data_regress=markolab_deltacoef(new_data',round(tau_regress*newfs),2)'; % ap
 
 for i=1:ntypes
 
-	if isempty(TRIALS.fluo_include.(trial_types{i})), continue; end
+	if length(TRIALS.fluo_include.(trial_types{i}))<3
+	
+		RAW.ci.(trial_types{i})=[];
+		RAW.mu.(trial_types{i})=[];
+
+		REGRESS.ci.(trial_types{i})=[];
+		REGRESS.mu.(trial_types{i})=[];
+
+		continue; 
+
+	end
+
 	if strcmp(trial_types{i},'include'), continue; end
 	if strcmp(trial_types{i},'idx'), continue; end
 
