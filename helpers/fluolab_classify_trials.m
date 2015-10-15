@@ -32,6 +32,7 @@ method='t'; % [t]tl or [s]ound
 daf_level=.4;
 smoothing=.06;
 daf_cutoff=500;
+padding=[];
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -55,10 +56,63 @@ for i=1:2:nparams
 			daf_level=varargin{i+1};
 		case 'smoothing'
 			smoothing=varargin{i+1};
+		case 'padding'
+			padding=varargin{i+1};
 	end
 end
 
+<<<<<<< HEAD
 blanking
+=======
+if ~isempty(padding) & ~isempty(TTL)
+
+	nsamples=size(TTL.data,1);
+
+	padding_idx_ttl=[];
+
+	if padding(1)==0
+		padding_idx_ttl(1)=1;
+	else
+		padding_idx_ttl(1)=round(padding(1)*TTL.fs);
+	end
+
+	if padding(2)==0
+		padding_idx_ttl(2)=nsamples;
+	else
+		padding_idx_ttl(2)=nsamples-round(padding(2)*TTL.fs);
+	end
+
+	padding_idx_ttl=padding_idx_ttl(1):padding_idx_ttl(2);
+
+	TTL.data=TTL.data(padding_idx_ttl,:);
+
+end
+
+if ~isempty(padding) & ~isempty(AUDIO)
+	
+	nsamples=size(AUDIO.data,1);
+
+	padding_idx_audio=[];
+
+	if padding(1)==0
+		padding_idx_audio(1)=1;
+	else
+		padding_idx_audio(1)=round(padding(1)*AUDIO.fs);
+	end
+
+	if padding(2)==0
+		padding_idx_audio(2)=nsamples;
+	else
+		padding_idx_audio(2)=nsamples-round(padding(2)*AUDIO.fs);
+	end
+
+	padding_idx_audio=padding_idx_audio(1):padding_idx_audio(2);
+
+
+	AUDIO.data=AUDIO.data(padding_idx_audio,:);
+
+end
+>>>>>>> 3977db9e02c661a8f8ee2f910a8929fc9583d5e3
 
 switch lower(method(1))
 
