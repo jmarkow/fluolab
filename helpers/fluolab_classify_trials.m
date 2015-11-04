@@ -204,7 +204,7 @@ switch lower(method(1))
 		daf_mat=filtfilt(b,a,AUDIO.data(blanking_idx,:)).^2;
 		smooth_smps=round(smoothing*AUDIO.fs);
 		daf_mat=filter(ones(smooth_smps,1)/smooth_smps,1,daf_mat);
-        daf_mat=daf_mat>daf_level;
+        	daf_mat=daf_mat>daf_level;
 		[~,daf_trials]=find(daf_mat);
 		daf_idx=unique(daf_trials);
 		first_daf=1;
