@@ -51,13 +51,20 @@ end
 NEW_DATA=filtfilt(b,a,DATA);
 NEW_DATA=downsample(DATA,decimate_f);
 
-[nsamples,ntrials]=size(NEW_DATA);
+[nsamples,ntrials,nchannels]=size(NEW_DATA);
 TIME=downsample(TIME,decimate_f);
+
+% use second channel as reference if it exists
+
+if nchannels>1
+	disp('Referencing using second channel...');
+	NEW_DATA=fluolab_rereference(NEW_DATA(:,:,1),NEW_DATA(:,:,2));
+	dff=0;
+end
 
 tau_smps=round(tau*newfs);
 
 if tau>0
-    tau_smps
 	NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n',smooth_type);
 	NEW_DATA=NEW_DATA(tau_smps:end,:);
 	TIME=TIME(tau_smps:end);
@@ -74,12 +81,10 @@ if detrend_win>0
 	TIME=TIME(detrend_smps:end-detrend_smps);
 end
 
-
 [nsamples,ntrials]=size(NEW_DATA);
 
 
 % exclude zero-padded portion at the beginning
-
 % adjust time accordingly
 
 switch lower(normalize(1))
@@ -99,5 +104,3 @@ switch lower(normalize(1))
 		NEW_DATA=zscore(NEW_DATA);
 
 end
-
-

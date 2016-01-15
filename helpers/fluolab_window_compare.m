@@ -14,7 +14,7 @@ time_width=.075;
 escape_dist=.005;
 escape_width=.075;
 escape_idx=[];
-time_win=[.1 .4];
+time_win=[.1 .2];
 padding=[.2 .2];
 thresh=.5;
 

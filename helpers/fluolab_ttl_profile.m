@@ -1,4 +1,4 @@
-function [MAT]=fluoflab_sliding_window(DATA,TTL,TRIALS,varargin)
+function [MAT POS_CROSS]=fluoflab_sliding_window(TTL,varargin)
 % plot window centered on ttl pulse
 %
 %
@@ -8,7 +8,7 @@ MAT=[];
 
 colors='jet';
 cbar_dist=.1;
-cbar_width = .025; 
+cbar_width = .025;
 clim_order=1e3;
 datenums=[];
 time_dist=.005;
@@ -16,9 +16,10 @@ time_width=.075;
 escape_dist=.005;
 escape_width=.075;
 escape_idx=[];
-time_win=[.1 .4];
 padding=[.2 .2];
 thresh=.5;
+channel=1;
+binsize=.001;
 
 nparams=length(varargin);
 
@@ -42,63 +43,48 @@ for i=1:2:nparams
 			escape_idx=varargin{i+1};
 		case 'padding'
 			padding=varargin{i+1};
-        case 'time_win'
-            time_win=varargin{i+1};
+		case 'channel'
+			channel=varargin{i+1};
+		case 'binsize'
+			binsize=varargin{i+1};
 	end
 end
 
-[nsamples,ntrials]=size(DATA.mat);
-TTL.data=TTL.data(:,TRIALS.all.fluo_include);
-
-% how to estimate mean/ci
-
-mufun=@(x) mean(x,2);
-varfun=@(x) std(x,[],2);
+[nsamples,ntrials,nchannels]=size(TTL.data);
 
 % get onsets
 
-[nsamples_ttl]=size(TTL.data,1);
+idx=(1:nsamples-1);
 
-idx=(1:nsamples_ttl-1);
+% POS_CROSS
 
-% pos_cross
+POS_CROSS=zeros(1,ntrials);
 
-pos_cross=zeros(1,ntrials);
-data_fs=DATA.fs;
+padding_smps=round(padding.*TTL.fs);
 
-win_len=round(time_win.*DATA.fs);
-tmp=zeros(sum(win_len)+1,ntrials);
+new_fs=1/binsize;
+new_samples=round((nsamples/TTL.fs)*new_fs);
+new_t=[0:new_samples-1]/new_fs;
 
-padding_smps=round(padding.*DATA.fs);
-todel=[];
+MAT=zeros(new_samples,ntrials);
 
 for i=1:ntrials
-	
-	cur_ttl=TTL.data(:,i);
-	i
+
+	cur_ttl=TTL.data(:,i,channel);
+
 	hit=TTL.t(find(cur_ttl(idx)<thresh&cur_ttl(idx+1)>=thresh));
 	hit(hit<padding(1)|hit>TTL.t(end)-padding(2))=[];
 
 	% map the hit to the nearest timepoint in the singing data
 
 	if isempty(hit)
-		todel=[todel i];
 		continue;
 	end
 
 	hit=hit(1)
-	[~,loc]=min(abs(DATA.t-hit));
-	
-	pos_cross(i)=loc;
-    
-	if loc-win_len(1)<=0 | loc+win_len(2)>nsamples
-		todel=[todel i];
-		continue;
-    end
-    
-	tmp(:,i)=DATA.mat(loc-win_len(1):loc+win_len(2),i);
+	[~,loc]=min(abs(new_t-hit));
+
+	POS_CROSS(i)=loc;
+	MAT(loc,i)=1;
 
 end
-
-
-
