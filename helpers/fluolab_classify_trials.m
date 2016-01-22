@@ -27,12 +27,12 @@ noise_pad=.05;
 pulse_len=.02;
 npulse=3;
 interpulse_len=.02;
-blanking=[.15 .15];
 method='t'; % [t]tl or [s]ound
 daf_level=.4;
 smoothing=.06;
 daf_cutoff=500;
 padding=[];
+include_trials=[];
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -48,8 +48,6 @@ for i=1:2:nparams
 			noise_thresh=varargin{i+1};
 		case 'catch_thresh'
 			catch_tresh=varargin{i+1};
-		case 'blanking'
-			blanking=varargin{i+1};
 		case 'method'
 			method=varargin{i+1};
 		case 'daf_level'
@@ -58,7 +56,15 @@ for i=1:2:nparams
 			smoothing=varargin{i+1};
 		case 'padding'
 			padding=varargin{i+1};
+		case 'include_trials'
+			include_trials=varargin{i+1};
 	end
+end
+
+if isempty(method)
+	C=zeros(size(TTL.data,2),1);
+	TRIALS=[];
+	return;
 end
 
 if ~isempty(padding) & ~isempty(TTL)
@@ -86,7 +92,7 @@ if ~isempty(padding) & ~isempty(TTL)
 end
 
 if ~isempty(padding) & ~isempty(AUDIO)
-	
+
 	nsamples=size(AUDIO.data,1);
 
 	padding_idx_audio=[];
@@ -118,8 +124,6 @@ switch lower(method(1))
 			TTL.data=double(TTL.data);
 		end
 
-		%C=fluolab_classify_trials(TTL.data(blanking_idx,:),TTL.fs);
-
 		[nsamples,ntrials]=size(TTL.data);
 
 		noise_len=round(noise_len*TTL.fs);
@@ -129,21 +133,6 @@ switch lower(method(1))
 
 		% construct detection filters
 
-		blanking_idx=[];
-
-		if blanking(1)==0
-			blanking_idx(1)=1;
-		else
-			blanking_idx(1)=round(blanking(1)*TTL.fs);
-		end
-
-		if blanking(2)==0
-			blanking_idx(2)=nsamples;
-		else
-			blanking_idx(2)=nsamples-round(blanking(2)*TTL.fs);
-		end
-
-		blanking_idx=blanking_idx(1):blanking_idx(2);
 
 		noise_filt=ones(noise_len,1);
 		noise_filt=[-ones(noise_pad,1);noise_filt;-ones(noise_pad,1)];
@@ -155,7 +144,7 @@ switch lower(method(1))
 
 		% get the noise trials
 
-		ttl_mat=double(TTL.data(blanking_idx,:)>1);
+		ttl_mat=double(TTL.data>1);
 		ttl_mat(ttl_mat==0)=-1;
 
 		noise_mat=filter(noise_filt,1,ttl_mat);
@@ -183,25 +172,9 @@ switch lower(method(1))
 		end
 
 		[nsamples,ntrials]=size(AUDIO.data);
-	
-		blanking_idx=[];
-
-		if blanking(1)==0
-			blanking_idx(1)=1;
-		else
-			blanking_idx(1)=round(blanking(1)*AUDIO.fs);
-		end
-
-		if blanking(2)==0
-			blanking_idx(2)=nsamples;
-		else
-			blanking_idx(2)=nsamples-round(blanking(2)*AUDIO.fs);
-		end
-
-		blanking_idx=blanking_idx(1):blanking_idx(2);
 
 		[b,a]=ellip(4,.2,40,[daf_cutoff]/(AUDIO.fs/2),'high');
-		daf_mat=filtfilt(b,a,AUDIO.data(blanking_idx,:)).^2;
+		daf_mat=filtfilt(b,a,AUDIO.data).^2;
 		smooth_smps=round(smoothing*AUDIO.fs);
 		daf_mat=filter(ones(smooth_smps,1)/smooth_smps,1,daf_mat);
         	daf_mat=daf_mat>daf_level;
@@ -227,4 +200,11 @@ switch lower(method(1))
 
 end
 
-
+if ~isempty(include_trials)
+	TRIALS.fluo_include.catch=find(C(include_trials)==2);
+	TRIALS.fluo_include.daf=find(C(include_trials)==1);
+	TRIALS.fluo_include.other=find(C(include_trials)==0);
+	TRIALS.fluo_include.catch_other=find(C(include_trials)==0|C(include_trials)==2);
+	TRIALS.fluo_include.all=[1:length(include_trials)];
+	TRIALS.all.fluo_include=include_trials;
+end

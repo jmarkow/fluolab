@@ -14,7 +14,7 @@ time_width=.075;
 escape_dist=.005;
 escape_width=.075;
 escape_idx=[];
-time_win=[.1 .2];
+time_win=[.1 .3];
 padding=[.2 .2];
 thresh=.5;
 
@@ -101,8 +101,12 @@ end
 todel
 % distribute tmp
 
-win_data.daf=tmp(:,setdiff(TRIALS.fluo_include.daf,todel));
-win_data.catch=tmp(:,setdiff(TRIALS.fluo_include.catch,todel));
-win_data.t=[-win_len(1):win_len(2)]'/DATA.fs;
+use_daf=setdiff(TRIALS.fluo_include.daf,todel);
+use_catch=setdiff(TRIALS.fluo_include.catch,todel);
 
+win_data.daf=tmp(:,use_daf);
+win_data.catch=tmp(:,use_catch);
+win_data.t=[-win_len(1):win_len(2)]'/DATA.fs;
+win_data.trials.daf=TRIALS.all.fluo_include(use_daf);
+win_data.trials.catch=TRIALS.all.fluo_include(use_catch);
 
