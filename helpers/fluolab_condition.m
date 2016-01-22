@@ -6,7 +6,7 @@ newfs=100; % new sampling rate
 normalize='m'; % normalize method
 detrend_win=.05; % length of detrending window
 dff=1; % dff?
-detrend_method='b';
+detrend_method='p';
 smooth_type='b';
 
 nparams=length(varargin);

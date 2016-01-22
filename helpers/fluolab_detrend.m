@@ -13,7 +13,7 @@ dff=1; % convert to dff or just detrend?
 fs=22; % sampling rate of signal
 win=.4; % size of window (to the left and right of each point, hence .4 is a .8 window in total length)
 per=8; % used for the prctile method, which prctile to use
-method='prctile'; % 'prctile','lsq'
+method='prctile'; % 'prctile','regression'
 sliding=1;
 edge='r';
 
@@ -103,10 +103,13 @@ if win>0
 
 					tmp=tmp(win_samples+1);
 
+				otherwise
+
+					error('Did not recognize detrend method...')
+
 			end
 
 				% replace sample with detrended version
-
 			NEWDATA(j-win_samples,i)=tmp;
 
 		end
