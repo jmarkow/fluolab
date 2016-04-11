@@ -156,7 +156,7 @@ switch lower(method(1))
 		[~,catch_trials]=find(catch_mat>catch_thresh);
 		catch_trials=unique(catch_trials);
 
-		C=zeros(1,size(TTL.data,2));
+		C=nan(1,size(TTL.data,2));
 		C(catch_trials)=2;
 		C(noise_trials)=1; % noise_trial catch_trial overlap overwritten as noise trial
 

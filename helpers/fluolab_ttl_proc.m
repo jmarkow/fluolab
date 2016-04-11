@@ -1,4 +1,4 @@
-function [TRIAL_TIMES,CHANGE_POINTS,CHANGE_TRIALS]=fluolab_ttl_proc(TTL,TRIALS,varargin)
+function [TRIAL_TIMES,CHANGE_POINTS,CHANGE_TRIALS,CHANGE_IDX]=fluolab_ttl_proc(TTL,TRIALS,varargin)
 %
 %
 %
@@ -62,27 +62,38 @@ trial_idx=1:ntrials;
 
 to_del=isnan(TRIAL_TIMES);
 
-TRIAL_TIMES(to_del)=[];
-trial_idx(to_del)=[];
+%TRIAL_TIMES(to_del)=[];
+%trial_idx(to_del)=[];
 TRIAL_TIMES=medfilt1(TRIAL_TIMES,5);
 
-figure();plot(TRIAL_TIMES)
+figure();plot(TRIAL_TIMES);
 pause();
 
+% trusty old Hampel filter to detect when we changed timing
+
 change=abs(diff([TRIAL_TIMES(1) TRIAL_TIMES]));
+%df=diff([TRIAL_TIMES(1) TRIAL_TIMES]);
+%[~,locs]=hampel(df,10,3)
+
 CHANGE_POINTS=trial_idx(find(change>mad(change,1)*100))+1;
 
 % arrange trial structure to reflect changepoints (array of structs, copy everything)?
 
-
 CHANGE_POINTS(CHANGE_POINTS>ntrials)=[];
 CHANGE_POINTS=unique([1 CHANGE_POINTS ntrials]);
+CHANGE_IDX=ones(ntrials,1)*length(CHANGE_POINTS)-1;
+
+for i=1:length(CHANGE_POINTS)-1
+   CHANGE_IDX(CHANGE_POINTS(i):CHANGE_POINTS(i+1)-1)=i; 
+end
+
 epochs=length(CHANGE_POINTS)-1;
 
 conditions=fieldnames(TRIALS.all);
 conditions(strcmp(conditions,'fluo_include'))=[];
 
 for i=1:length(conditions)
+    
   cur_trials=TRIALS.all.(conditions{i});
   fluo_trials=TRIALS.fluo_include.(conditions{i});
   map_trials=TRIALS.all.fluo_include(fluo_trials);
