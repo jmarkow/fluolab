@@ -8,8 +8,8 @@ smooth_type='b';
 channel=1:2;
 newfs=200;
 
-padding=[ .2 .2 ];
-detrend_win=.15;
+padding=[ .4 .4 ];
+detrend_win=.3;
 detrend_method='p';
 normalize='n';
 
