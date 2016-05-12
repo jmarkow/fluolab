@@ -1,17 +1,17 @@
 %%% user parameters
 %%
 trial_cut=1;
-nmads=0;
-tau=0.1;
+nmads=10;
+tau=0.2;
 tau_regress=.015;
-smooth_type='b';
+smooth_type='e';
 channel=1:2;
-newfs=200;
+newfs=100;
 
 padding=[ .4 .4 ];
-detrend_win=.3;
+detrend_win=.25;
 detrend_method='p';
-normalize='n';
+normalize='m';
 
 classify_trials='t';
 daf_level=0;
@@ -24,7 +24,7 @@ fluo_data=fluolab_datascrub(adc,'channel',channel,'trial_cut',trial_cut,'nmads',
 %%
 [trials,trials_idx]=fluolab_classify_trials(ttl,audio,...
 		'include_trials',fluo_data.trial_idx,'method',classify_trials,'daf_level',daf_level,...
-		'padding',padding);
+		'padding',template.extract_options.padding-[.1 .1]);
 trials_idx_fluo=trials_idx(trials.all.fluo_include);
 
 %%
@@ -41,11 +41,11 @@ fluo_regress.mat=markolab_deltacoef(fluo.mat',round(tau_regress*newfs),2)';
 
 % now align to interesting events
 %%
-[trial_times change_points change_trials,change_idx]=fluolab_ttl_proc(ttl,trials,'padding',padding);
+[trial_times change_points change_trials,change_idx]=fluolab_ttl_proc(ttl,trials,'padding',template.extract_options.padding);
 trial_times_fluo=trial_times(trials.all.fluo_include);
 change_idx_fluo=change_idx(trials.all.fluo_include);
 % align to trial_times window, plot peak time? value? integrated signal?
 
 % this should be very straightforward
 %%
-win_data=fluolab_window_data(zscore(fluo.mat),trial_times_fluo,change_idx_fluo,'fs',fluo.fs);
+win_data=fluolab_window_data(fluo.mat,trial_times_fluo,change_idx_fluo,'fs',fluo.fs);

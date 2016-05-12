@@ -29,9 +29,6 @@ for i=1:2:nparams
 end
 
 [nsamples,ntrials]=size(TTL.data);
-
-
-
 pad_smps=round(padding.*TTL.fs);
 
 if isempty(pad_smps) | pad_smps(1)==0
@@ -50,7 +47,6 @@ TRIAL_TIMES=nan(1,ntrials);
 
 for i=1:ntrials
     cur_trial=use_data(:,i)>ttl_thresh;
-
     onsets=~cur_trial(idx)&cur_trial(idx+1);
     onsets=min(find(onsets));
     if ~isempty(onsets)
@@ -61,17 +57,15 @@ end
 trial_idx=1:ntrials;
 
 to_del=isnan(TRIAL_TIMES);
-
-%TRIAL_TIMES(to_del)=[];
-%trial_idx(to_del)=[];
-TRIAL_TIMES=medfilt1(TRIAL_TIMES,5);
-
-figure();plot(TRIAL_TIMES);
-pause();
+tmp=TRIAL_TIMES;
+tmp(to_del)=[];
+trial_idx(to_del)=[];
 
 % trusty old Hampel filter to detect when we changed timing
 
-change=abs(diff([TRIAL_TIMES(1) TRIAL_TIMES]));
+tmp=medfilt1(tmp,5);
+change=abs(diff([tmp(1) tmp]));
+
 %df=diff([TRIAL_TIMES(1) TRIAL_TIMES]);
 %[~,locs]=hampel(df,10,3)
 
