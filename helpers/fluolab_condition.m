@@ -65,9 +65,9 @@ end
 tau_smps=round(tau*newfs);
 
 if tau>0
-	NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'n',smooth_type);
-	NEW_DATA=NEW_DATA(tau_smps:end,:);
-	TIME=TIME(tau_smps:end);
+	NEW_DATA=markolab_smooth(NEW_DATA,tau_smps,'r',smooth_type);
+	NEW_DATA=NEW_DATA(tau_smps/2:end,:);
+	TIME=TIME(tau_smps/2:end);
 end
 
 if ~strcmp(lower(detrend_method(1)),'n')
@@ -76,9 +76,9 @@ if ~strcmp(lower(detrend_method(1)),'n')
 end
 
 if detrend_win>0
-	detrend_smps=round(detrend_win*newfs)
-	NEW_DATA=NEW_DATA(detrend_smps:end-detrend_smps,:);
-	TIME=TIME(detrend_smps:end-detrend_smps);
+	%detrend_smps=round(detrend_win*newfs);
+	%NEW_DATA=NEW_DATA(detrend_smps:end-detrend_smps,:);
+	%TIME=TIME(detrend_smps:end-detrend_smps);
 end
 
 [nsamples,ntrials]=size(NEW_DATA);

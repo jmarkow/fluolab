@@ -1,17 +1,17 @@
 %%% user parameters
 %%
 trial_cut=1;
-nmads=5;
-tau=0.05;
+nmads=10;
+tau=0.2;
 tau_regress=.015;
-smooth_type='b';
-channel=1;
-newfs=200;
+smooth_type='e';
+channel=1:2;
+newfs=100;
 
-padding=[ 0 0 ];
-detrend_win=.6;
+padding=[ .4 .4 ];
+detrend_win=.25;
 detrend_method='p';
-normalize='n';
+normalize='m';
 
 classify_trials='t';
 daf_level=0;
@@ -50,5 +50,4 @@ change_idx_fluo=change_idx(trials.all.fluo_include);
 
 % this should be very straightforward
 %%
-
 win_data=fluolab_window_data(zscore(fluo.mat),fluo.t,trial_times_fluo,change_idx_fluo,'fs',fluo.fs);
