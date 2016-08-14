@@ -28,11 +28,13 @@ pulse_len=.02;
 npulse=3;
 interpulse_len=.02;
 method='t'; % [t]tl or [s]ound
-daf_level=.4;
+daf_level=.2;
 smoothing=.06;
-daf_cutoff=500;
+daf_cutoff=10e3;
+song_cutoff=[3e3 7e3];
 padding=[];
 include_trials=[];
+lambda=.1;
 
 for i=1:2:nparams
 	switch lower(varargin{i})
@@ -174,10 +176,20 @@ switch lower(method(1))
 		[nsamples,ntrials]=size(AUDIO.data);
 
 		[b,a]=ellip(4,.2,40,[daf_cutoff]/(AUDIO.fs/2),'high');
-		daf_mat=filtfilt(b,a,AUDIO.data).^2;
-		smooth_smps=round(smoothing*AUDIO.fs);
-		daf_mat=filter(ones(smooth_smps,1)/smooth_smps,1,daf_mat);
-        	daf_mat=daf_mat>daf_level;
+        [b2,a2]=ellip(3,.2,40,[song_cutoff]/(AUDIO.fs/2),'bandpass');
+		
+        daf_mat=filtfilt(b,a,AUDIO.data).^2;
+        song_mat=filtfilt(b2,a2,AUDIO.data).^2;
+		
+        smooth_smps=round(smoothing*AUDIO.fs);
+		
+        daf_mat=sqrt(filter(ones(smooth_smps,1)/smooth_smps,1,daf_mat));
+        song_mat=sqrt(filter(ones(smooth_smps,1)/smooth_smps,1,song_mat));
+        
+        figure(1);imagesc(daf_mat);
+        pause();
+        
+        daf_mat=(daf_mat./(song_mat+lambda))>daf_level;
 		[~,daf_trials]=find(daf_mat);
 		daf_idx=unique(daf_trials);
 		first_daf=1;

@@ -1,20 +1,20 @@
 %%% user parameters
 %%
-trial_cut=1;
+trial_cut=3.5;
 nmads=10;
-tau=0.2;
+tau=0.1;
 tau_regress=.015;
-smooth_type='e';
-channel=1:2;
-newfs=100;
+smooth_type='b';
+channel=1;
+newfs=200;
 
 padding=[ .4 .4 ];
 detrend_win=.25;
 detrend_method='p';
-normalize='m';
+normalize='n';
 
-classify_trials='t';
-daf_level=0;
+classify_trials='s';
+daf_level=0.2;
 
 % clean up the data
 %%

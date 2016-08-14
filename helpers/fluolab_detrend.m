@@ -14,8 +14,8 @@ fs=22; % sampling rate of signal
 win=.4; % size of window (to the left and right of each point, hence .4 is a .8 window in total length)
 per=8; % used for the prctile method, which prctile to use
 method='prctile'; % 'prctile','regression'
+edges='w'; % how to deal with edges 'r'epeat 'p'eriodic or 'w'in
 sliding=1;
-edge='r';
 
 if mod(nparams,2)>0
 	error('Parameters must be specified as parameter/value pairs');
@@ -35,8 +35,8 @@ for i=1:2:nparams
 			win=varargin{i+1};
 		case 'sliding'
 			sliding=varargin{i+1};
-		case 'edge'
-			edge=varargin{i+1};
+		case 'edges'
+			edges=varargin{i+1};
 	end
 end
 
@@ -61,7 +61,15 @@ if win>0
 
 		% repeat data at the edges
 
-		curr_data=[ repmat(curr_data(1),[win_samples 1]);curr_data;repmat(curr_data(end),[win_samples 1]) ];
+		switch lower(edges(1))
+		case 'r'
+			curr_data=[ repmat(curr_data(1),[win_samples 1]);curr_data;repmat(curr_data(end),[win_samples 1]) ];
+		case 'w'
+			curr_data=[ curr_data(win_samples:-1:1);curr_data;curr_data(end:-1:end-(win_samples-1)) ];
+		case 'p'
+			curr_data=[ curr_data(end:-1:end-(win_samples-1));curr_data;curr_data(1:win_samples) ];
+		end
+
 
 		counter=1;
 

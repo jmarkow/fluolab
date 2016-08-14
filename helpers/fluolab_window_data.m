@@ -51,8 +51,6 @@ for i=1:ntrials
 		cur_point=round(mu_times(cur_idx==changes)*fs);
     end
 
-    cur_point
-    
 	if cur_point-time_smps(1)>0 & cur_point+time_smps(2)<=nsamples
 		WIN_DATA(:,i)=DATA(cur_point-time_smps(1):cur_point+time_smps(2),i);
 	end
