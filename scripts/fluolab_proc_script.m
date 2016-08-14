@@ -24,7 +24,7 @@ fluo_data=fluolab_datascrub(adc,'channel',channel,'trial_cut',trial_cut,'nmads',
 %%
 [trials,trials_idx]=fluolab_classify_trials(ttl,audio,...
 		'include_trials',fluo_data.trial_idx,'method',classify_trials,'daf_level',daf_level,...
-		'padding',template.extract_options.padding-[.1 .1]);
+		'padding',template.extract_options.padding);
 trials_idx_fluo=trials_idx(trials.all.fluo_include);
 
 %%
@@ -37,6 +37,8 @@ fluo_regress=fluo;
 
 % regression coefficients (smooth deriv.)
 
+% normalize trials by looking outside of singing???
+
 fluo_regress.mat=markolab_deltacoef(fluo.mat',round(tau_regress*newfs),2)';
 
 % now align to interesting events
@@ -48,4 +50,4 @@ change_idx_fluo=change_idx(trials.all.fluo_include);
 
 % this should be very straightforward
 %%
-win_data=fluolab_window_data(fluo.mat,trial_times_fluo,change_idx_fluo,'fs',fluo.fs);
+win_data=fluolab_window_data(zscore(fluo.mat),fluo.t,trial_times_fluo,change_idx_fluo,'fs',fluo.fs);

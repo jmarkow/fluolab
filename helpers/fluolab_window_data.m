@@ -1,4 +1,4 @@
-function WIN_DATA=fluoflab_sliding_window(DATA,TRIAL_TIMES,CHANGE_IDX,varargin)
+function WIN_DATA=fluoflab_sliding_window(DATA,DATA_T,TRIAL_TIMES,CHANGE_IDX,varargin)
 % plot window centered on ttl pulse
 %
 %
@@ -47,8 +47,10 @@ for i=1:ntrials
 	cur_point=round(TRIAL_TIMES(i)*fs);
 	cur_idx=CHANGE_IDX(i);
 
-    if isnan(cur_point)
-		cur_point=round(mu_times(cur_idx==changes)*fs);
+    if ~isnan(cur_point)
+		[~,cur_point]=min(abs(DATA_T-TRIAL_TIMES(i)));
+    else
+        [~,cur_point]=min(abs(DATA_T-mu_times(cur_idx)));
     end
 
 	if cur_point-time_smps(1)>0 & cur_point+time_smps(2)<=nsamples

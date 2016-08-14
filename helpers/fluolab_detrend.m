@@ -1,4 +1,4 @@
-function DATA=fluolab_detrend(DATA,varargin)
+function [DATA,BASELINE]=fluolab_detrend(DATA,varargin)
 %simple detrending routine
 %
 %
@@ -53,6 +53,7 @@ win_x=[1:win_len]';
 win_intercept=ones(size(win_x));
 
 NEWDATA=DATA;
+BASELINE=zeros(size(NEWDATA));
 
 if win>0
 	for i=1:ntrials
@@ -119,6 +120,7 @@ if win>0
 
 				% replace sample with detrended version
 			NEWDATA(j-win_samples,i)=tmp;
+			BASELINE(j-win_samples,i)=tmp_baseline;
 
 		end
 
@@ -135,6 +137,8 @@ else
 			else
 				NEWDATA=NEWDATA-baseline;
 			end
+
+			BASELINE=baseline;
 
 		case 'r'
 
@@ -155,7 +159,7 @@ else
 				end
 
 				NEWDATA(:,i)=tmp;
-
+				BASELINE(:,i)=tmp_baseline;
 			end
 	end
 end
