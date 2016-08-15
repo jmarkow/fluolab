@@ -186,8 +186,8 @@ switch lower(method(1))
         daf_mat=sqrt(filter(ones(smooth_smps,1)/smooth_smps,1,daf_mat));
         song_mat=sqrt(filter(ones(smooth_smps,1)/smooth_smps,1,song_mat));
         
-        figure(1);imagesc(daf_mat);
-        pause();
+%         figure(1);imagesc(daf_mat);
+%         pause();
         
         daf_mat=(daf_mat./(song_mat+lambda))>daf_level;
 		[~,daf_trials]=find(daf_mat);

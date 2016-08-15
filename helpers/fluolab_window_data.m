@@ -6,7 +6,7 @@ function WIN_DATA=fluoflab_sliding_window(DATA,DATA_T,TRIAL_TIMES,CHANGE_IDX,var
 %
 
 thresh=.5;
-time_win=[.005 .4];
+time_win=[0 .3];
 fs=200;
 
 nparams=length(varargin);
